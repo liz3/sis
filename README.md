@@ -11,4 +11,4 @@ Get docker/docker-compose
 Run `docker-compose up --build` in the root
 
 # License
-As with everything i do, this is licensed as Free software under the GP 2.0
+As with everything i do, this is licensed as Free software under the GPL 2.0
