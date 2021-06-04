@@ -6,6 +6,7 @@ RUN go mod download
 RUN mkdir data
 COPY main.go main.go
 COPY server server
+COPY util util
 RUN go build -o sis .
 
 CMD ["./sis"]

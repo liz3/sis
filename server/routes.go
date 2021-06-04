@@ -5,12 +5,12 @@ import (
 	"github.com/kataras/iris/v12/context"
 	"os"
 	"strconv"
-	"time"
 	"strings"
 	"io"
 	"io/ioutil"
 	"encoding/json"
 	"sync"
+	"sis/util"
 
 )
 
@@ -51,7 +51,36 @@ func BuildRoutes(app *iris.Application) {
 			return
 		}
 		defer file.Close()
-		id := strconv.FormatInt(time.Now().Unix(), 10)
+		var entries []Entry
+		if _, err := os.Stat("./data/files.json"); err == nil {
+			content, err:= ioutil.ReadFile("./data/files.json")
+			if err != nil {
+				ctx.StatusCode(iris.StatusInternalServerError)
+				_, _ = ctx.JSON(map[string]string{"message": "internal_error_on_upload"})
+				return
+			}
+			err = json.Unmarshal(content, &entries)
+			if err != nil {
+				ctx.StatusCode(iris.StatusInternalServerError)
+				_, _ = ctx.JSON(map[string]string{"message": "internal_error_on_upload"})
+				return
+			}
+		}
+		var id string
+		for {
+			id = util.RandomString(15)
+			var found = false
+			for _, entry := range entries {
+				if entry.Id == id {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				break
+			}
+		}
 		parts := strings.Split(info.Filename, ".")
 		ext := parts[len(parts)-1]
 		var e = Entry{
@@ -69,23 +98,7 @@ func BuildRoutes(app *iris.Application) {
 		}
 		defer out.Close()
 		io.Copy(out, file)
-		var entries []Entry
-		if _, err := os.Stat("./data/files.json"); err == nil {
-			content, err:= ioutil.ReadFile("./data/files.json")
-			if err != nil {
-				ctx.StatusCode(iris.StatusInternalServerError)
-				_, _ = ctx.JSON(map[string]string{"message": "internal_error_on_upload"})
-				return
-			}
-			err = json.Unmarshal(content, &entries)
-			if err != nil {
-				ctx.StatusCode(iris.StatusInternalServerError)
-				_, _ = ctx.JSON(map[string]string{"message": "internal_error_on_upload"})
-				return
-			}
-		}
 		entries = append(entries, e)
-
 		jsonout, err := json.Marshal(entries)
 		if err != nil {
 			ctx.StatusCode(iris.StatusInternalServerError)
